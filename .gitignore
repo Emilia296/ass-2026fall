@@ -1,0 +1,10 @@
+.venv/
+node_modules/
+dist/
+.env
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.log
+.runtime/
+.wrangler/

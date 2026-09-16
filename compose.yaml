@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: charge
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-charge}
+      POSTGRES_DB: charge
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U charge -d charge"]
+      interval: 5s
+      retries: 10
+  redis:
+    image: redis:7
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec", "--maxmemory-policy", "noeviction"]
+    ports: ["127.0.0.1:6379:6379"]
+    volumes: ["redis-data:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+  init:
+    build: ./backend
+    command: ["python", "-m", "app.seed"]
+    environment: &backend-env
+      DATABASE_URL: postgresql+psycopg://charge:${POSTGRES_PASSWORD:-charge}@postgres:5432/charge
+      REDIS_URL: redis://redis:6379/0
+      DEMO_MODE: "true"
+      JWT_SECRET: ${JWT_SECRET:-local-demo-only-change-this-secret-before-deploying}
+      DEVICE_SECRET: ${DEVICE_SECRET:-local-device-secret-change-before-deploying}
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+  api:
+    build: ./backend
+    environment: *backend-env
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on:
+      init: {condition: service_completed_successfully}
+  worker:
+    build: ./backend
+    environment: *backend-env
+    command: ["python", "-m", "app.worker"]
+    depends_on:
+      init: {condition: service_completed_successfully}
+  simulator:
+    build: ./backend
+    environment: *backend-env
+    command: ["python", "-m", "app.simulator"]
+    depends_on:
+      init: {condition: service_completed_successfully}
+volumes:
+  postgres-data:
+  redis-data:

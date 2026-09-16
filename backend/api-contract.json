@@ -1,0 +1,567 @@
+[
+  {
+    "method": "POST",
+    "path": "/api/v1/app/auth/sms-code",
+    "title": "1.1 获取短信登录验证码"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/auth/login",
+    "title": "1.2 用户登录"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/auth/logout",
+    "title": "1.3 退出登录"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/users/me",
+    "title": "1.4 获取个人信息"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/app/users/me",
+    "title": "1.5 修改个人信息"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/app/auth/password",
+    "title": "1.6 修改登录密码"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/vehicles",
+    "title": "2.1 获取车辆列表"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/vehicles",
+    "title": "2.2 新增车辆"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/app/vehicles/{vehicleId}",
+    "title": "2.3 修改车辆"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/app/vehicles/{vehicleId}",
+    "title": "2.4 解绑车辆"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/app/vehicles/{vehicleId}/default",
+    "title": "2.5 设置默认车辆"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/vehicles/default",
+    "title": "2.6 获取默认车辆"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/stations",
+    "title": "3.1 查询充电站列表"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/stations/{stationId}",
+    "title": "3.2 获取充电站详情"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/stations/{stationId}/piles",
+    "title": "3.3 获取站点充电桩"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/piles/scan",
+    "title": "3.4 扫码识别充电桩"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/favorites/stations",
+    "title": "4.1 获取收藏站点"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/stations/{stationId}/favorite",
+    "title": "4.2 收藏站点"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/app/stations/{stationId}/favorite",
+    "title": "4.3 取消收藏"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/app/stations/{stationId}/availability-watch",
+    "title": "4.4 设置/修改空闲桩提醒"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/stations/{stationId}/availability-watch",
+    "title": "4.5 查询空闲桩提醒"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/stations/{stationId}/availability-watch/continue",
+    "title": "4.6 继续提醒"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/stations/{stationId}/availability-watch/cancel",
+    "title": "4.7 取消提醒"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/reservations",
+    "title": "5.1 创建预约"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/reservations",
+    "title": "5.2 我的预约列表"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/reservations/{reservationId}",
+    "title": "5.3 预约详情"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/reservations/{reservationId}/cancel",
+    "title": "5.4 取消预约"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/reservations/{reservationId}/arrive",
+    "title": "5.5 确认到场"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/charging/sessions",
+    "title": "6.1 开始充电"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/charging/sessions/current",
+    "title": "6.2 获取当前充电会话"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/charging/sessions/{sessionId}",
+    "title": "6.3 获取充电会话详情"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/charging/sessions/{sessionId}/fee-preview",
+    "title": "6.4 查询当前费用预估"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/charging/sessions/{sessionId}/stop",
+    "title": "6.5 停止充电"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/charging/sessions/{sessionId}/leave",
+    "title": "6.6 模拟车辆驶离"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/orders",
+    "title": "7.1 我的订单列表"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/orders/{orderId}",
+    "title": "7.2 订单详情"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/orders/{orderId}/fee-details",
+    "title": "7.3 获取订单分时计费明细"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/orders/{orderId}/available-coupons",
+    "title": "7.4 获取订单可用优惠券"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/orders/{orderId}/quote",
+    "title": "7.5 订单金额试算"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/orders/{orderId}/pay",
+    "title": "7.6 支付订单"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/coupons",
+    "title": "8.1 我的优惠券"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/coupon-templates/exchangeable",
+    "title": "8.2 可兑换优惠券列表"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/coupon-templates/{templateId}/exchange",
+    "title": "8.3 积分兑换优惠券"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/coupon-events/daily-login",
+    "title": "8.4 触发每日优惠券活动"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/points",
+    "title": "9.1 获取积分账户"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/points/records",
+    "title": "9.2 积分流水"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/credit",
+    "title": "9.3 获取信誉分"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/credit/records",
+    "title": "9.4 信誉分流水"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/messages",
+    "title": "10.1 消息列表"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/messages/unread-count",
+    "title": "10.2 获取未读数量"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/app/messages/{messageId}/read",
+    "title": "10.3 标记消息已读"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/app/messages/read-all",
+    "title": "10.4 全部已读"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/app/messages/{messageId}",
+    "title": "10.5 删除消息"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/after-sales",
+    "title": "11.1 提交售后申请"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/after-sales",
+    "title": "11.2 我的售后列表"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/after-sales/{afterSalesId}",
+    "title": "11.3 售后详情"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/app/faults",
+    "title": "12.1 用户提交故障"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/auth/login",
+    "title": "13.1 管理员登录"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/auth/logout",
+    "title": "13.2 管理员退出"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/dashboard/summary",
+    "title": "14.1 首页统计"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/stations",
+    "title": "15.1 站点列表"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/stations",
+    "title": "15.2 新增站点"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/stations/{stationId}",
+    "title": "15.3 修改站点"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/stations/{stationId}/status",
+    "title": "15.4 修改站点运营状态"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/piles",
+    "title": "16.1 充电桩列表"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/piles",
+    "title": "16.2 新增充电桩"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/piles/{pileId}",
+    "title": "16.3 修改充电桩"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/piles/{pileId}/status",
+    "title": "16.4 修改充电桩状态"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/charging/sessions/{sessionId}/stop",
+    "title": "16.5 后台终止充电会话"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/price-plans",
+    "title": "17.1 价格方案列表"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/price-plans",
+    "title": "17.2 新增价格方案"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/price-plans/{planId}",
+    "title": "17.3 修改价格方案基础信息"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/price-plans/{planId}/periods",
+    "title": "17.4 覆盖保存分时价格"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/occupancy-fee-rules",
+    "title": "17.5 查询占桩费规则"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/occupancy-fee-rules/{ruleId}",
+    "title": "17.6 保存占桩费规则"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/orders",
+    "title": "18.1 订单列表"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/orders/{orderId}",
+    "title": "18.2 订单详情"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reservations",
+    "title": "19.1 预约列表"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/reservations/{reservationId}",
+    "title": "19.2 预约详情"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/users",
+    "title": "20.1 用户列表"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/users/{userId}",
+    "title": "20.2 用户详情"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/users/{userId}/status",
+    "title": "20.3 冻结/解禁用户"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/users/{userId}/unlock",
+    "title": "20.4 解除用户人工锁定"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/users/{userId}/points/adjust",
+    "title": "20.5 人工调整积分"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/users/{userId}/credit/adjust",
+    "title": "20.6 人工调整信誉分"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/coupon-templates",
+    "title": "21.1 优惠券模板列表"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/coupon-templates",
+    "title": "21.2 新增优惠券模板"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/coupon-templates/{templateId}",
+    "title": "21.3 修改优惠券模板"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/coupon-templates/{templateId}/status",
+    "title": "21.4 修改优惠券模板状态"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/coupon-templates/{templateId}/grant",
+    "title": "21.5 后台发放优惠券"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/coupon-event-rules",
+    "title": "21.6 优惠券触发规则列表"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/coupon-event-rules",
+    "title": "21.7 新增优惠券触发规则"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/coupon-event-rules/{ruleId}",
+    "title": "21.8 修改优惠券触发规则"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/faults",
+    "title": "22.1 故障列表"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/faults/{faultId}",
+    "title": "22.2 故障详情"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/faults/{faultId}/process",
+    "title": "22.3 接单/开始处理"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/faults/{faultId}/resolve",
+    "title": "22.4 完成故障处理"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/after-sales",
+    "title": "23.1 售后列表"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/after-sales/{afterSalesId}",
+    "title": "23.2 售后详情"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/after-sales/{afterSalesId}/handle",
+    "title": "23.3 处理售后申请"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/admin-users",
+    "title": "24.1 后台账号列表"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/admin-users",
+    "title": "24.2 新增后台账号"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/admin-users/{adminId}",
+    "title": "24.3 修改后台账号"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/admin-users/{adminId}/status",
+    "title": "24.4 启用/停用后台账号"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/roles",
+    "title": "24.5 角色列表"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/admin/roles",
+    "title": "24.6 新增角色"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/roles/{roleId}",
+    "title": "24.7 修改角色"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/permissions/tree",
+    "title": "24.8 获取权限树"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/roles/{roleId}/permissions",
+    "title": "24.9 保存角色权限"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/operation-logs",
+    "title": "25.1 操作日志列表"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/login-logs",
+    "title": "25.2 登录日志列表"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/admin/system-configs",
+    "title": "26.1 查询系统配置"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/admin/system-configs/{configKey}",
+    "title": "26.2 修改系统配置"
+  }
+]
