@@ -77,6 +77,8 @@ npm run dev
 
 复制 `backend/.env.example` 为 `backend/.env` 调整数据库、Redis、JWT、设备密钥和连接池配置。`DEMO_MODE=true` 时短信、支付和设备上报使用本地演示实现；短信接口仍不会回显验证码；接入真实供应商后再切换生产配置。
 
+要启用业务 Agent 的智谱模型回答，在 `backend/.env` 设置 `ZHIPUAI_API_KEY`（默认模型 `glm-5.3`）；未配置或模型超时会保留真实工具数据并降级为规则回答，详见 [Agent说明](docs/agent.md)。
+
 后端默认启动 API、Worker 和设备模拟器，日志位于 `.runtime/api.log`、`.runtime/worker.log` 和 `.runtime/simulator.log`。也提供 `compose.yaml` 作为容器部署入口。
 
 性能验证已按交付要求完成并通过压力测试。当前实现的高并发链路包括无状态 API、多实例网关、请求限流、数据库事务约束、共享缓存回源保护、设备分区队列、重试/死信、队列背压和运行指标。
