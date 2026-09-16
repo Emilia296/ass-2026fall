@@ -193,6 +193,30 @@ def daily_recovery():
             balance(db, uid, amount, "DAILY_RECOVERY", "SYSTEM", today, "每日信誉恢复", credit=True)
 
 
+def run_iteration(assigned, name, last):
+    had_error = False
+    for i in assigned:
+        try:
+            consume_once(i, name)
+        except Exception:
+            had_error = True
+            logging.exception("Telemetry consumer iteration failed: partition=%s", i)
+    if time.monotonic() - last > 2:
+        try:
+            maintenance_once()
+        except Exception:
+            had_error = True
+            logging.exception("Maintenance iteration failed")
+        else:
+            last = time.monotonic()
+    try:
+        cache.setex("worker:heartbeat:" + name, 15, str(time.time()))
+    except Exception:
+        had_error = True
+        logging.exception("Worker heartbeat failed")
+    return last, had_error
+
+
 def main():
     logging.basicConfig(level=logging.INFO)
     name = socket.gethostname() + "-" + str(os.getpid())
@@ -204,15 +228,8 @@ def main():
     if not assigned or any(x < 0 or x >= PARTITIONS for x in assigned):
         raise ValueError("Invalid WORKER_PARTITIONS")
     while True:
-        try:
-            for i in assigned:
-                consume_once(i, name)
-            if time.monotonic() - last > 2:
-                maintenance_once()
-                last = time.monotonic()
-            cache.setex("worker:heartbeat:" + name, 15, str(time.time()))
-        except Exception:
-            logging.exception("Worker iteration failed")
+        last, had_error = run_iteration(assigned, name, last)
+        if had_error:
             time.sleep(1)
 
 

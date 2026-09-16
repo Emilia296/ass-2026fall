@@ -124,7 +124,7 @@ QUERY_FIELDS = {
     "app/reservations": {**COMMON_LIST_QUERY},
     "app/orders": {**COMMON_LIST_QUERY, "paymentStatus": "string", "orderStatus": "string"},
     "app/messages": {**COMMON_LIST_QUERY, "isRead": "boolean"},
-    "app/coupons": {**COMMON_LIST_QUERY, "couponStatus": "string"},
+    "app/coupons": {**COMMON_LIST_QUERY},
     "admin/stations": {**COMMON_LIST_QUERY, "city": "string"},
     "admin/piles": {**COMMON_LIST_QUERY, "stationId": "integer", "pileType": "string"},
     "admin/orders": {**COMMON_LIST_QUERY, "stationId": "integer", "paymentStatus": "string"},

@@ -17,6 +17,25 @@ def test_openapi_describes_queries_and_action_bodies(client):
     reservation = spec["paths"][A + "/reservations"]["post"]["requestBody"]
     assert reservation["required"] is True
 
+    coupons = spec["paths"][A + "/coupons"]["get"]
+    coupon_queries = {p["name"] for p in coupons["parameters"]}
+    assert "status" in coupon_queries
+    assert "couponStatus" not in coupon_queries
+
+    telemetry = spec["paths"]["/api/v1/device/telemetry"]["post"]
+    events = telemetry["requestBody"]["content"]["application/json"]["schema"]["properties"][
+        "events"
+    ]
+    assert events["maxItems"] == 1000
+
+    admin_fault = spec["paths"]["/api/v1/admin/faults"]["post"]
+    assert admin_fault["security"] == [{"BearerAuth": []}]
+    assert set(admin_fault["requestBody"]["content"]["application/json"]["schema"]["required"]) == {
+        "pileId",
+        "faultType",
+        "faultDescription",
+    }
+
 
 def test_scan_missing_qr_code_is_parameter_error(client, user_headers):
     call(client, "GET", A + "/piles/scan", user_headers, code=40000)

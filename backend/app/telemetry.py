@@ -13,6 +13,10 @@ DEVICE_SECRET = os.getenv("DEVICE_SECRET", "local-device-secret-change-before-de
 if not DEMO and DEVICE_SECRET.startswith("local-device"):
     raise RuntimeError("Set DEVICE_SECRET")
 
+STREAM_GROUP = "billing"
+READ_BLOCK_MS = 100
+_initialized_groups = set()
+
 
 def sign(event):
     device_key = hmac.new(
@@ -56,14 +60,30 @@ def ingest(events):
 
 def consume_once(partition, consumer):
     key = "telemetry:" + str(partition)
-    group = "billing"
+    group = STREAM_GROUP
+    group_key = (key, group)
+    if group_key not in _initialized_groups:
+        try:
+            cache.xgroup_create(key, group, id="0", mkstream=True)
+        except Exception as exc:
+            if "BUSYGROUP" not in str(exc):
+                raise
+        _initialized_groups.add(group_key)
     try:
-        cache.xgroup_create(key, group, id="0", mkstream=True)
-    except Exception as e:
-        if "BUSYGROUP" not in str(e):
+        recovered = cache.xautoclaim(key, group, consumer, 30000, "0-0", count=100)[1]
+        # Redis BLOCK is expressed in milliseconds. Keep the sequential
+        # partition poll bounded without turning an idle worker into a busy loop.
+        batches = cache.xreadgroup(group, consumer, {key: ">"}, count=100, block=READ_BLOCK_MS)
+    except Exception as exc:
+        # A Redis restart or a test database reset can remove the group after
+        # this process cached its initialization state. Recreate it once.
+        if "NOGROUP" not in str(exc):
             raise
-    recovered = cache.xautoclaim(key, group, consumer, 30000, "0-0", count=100)[1]
-    batches = cache.xreadgroup(group, consumer, {key: ">"}, count=100, block=20)
+        _initialized_groups.discard(group_key)
+        cache.xgroup_create(key, group, id="0", mkstream=True)
+        _initialized_groups.add(group_key)
+        recovered = cache.xautoclaim(key, group, consumer, 30000, "0-0", count=100)[1]
+        batches = cache.xreadgroup(group, consumer, {key: ">"}, count=100, block=READ_BLOCK_MS)
     entries = recovered + [entry for _, batch in batches for entry in batch]
     done = []
     for mid, fields in entries:

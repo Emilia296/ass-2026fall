@@ -325,7 +325,18 @@ for agent_scope in ("app", "admin"):
     )
 # Original requirement includes operator-entered faults; this is a documented additive endpoint.
 app.add_api_route(
-    "/api/v1/admin/faults", endpoint, methods=["POST"], tags=["运营管理"], name="运营人员登记故障"
+    "/api/v1/admin/faults",
+    endpoint,
+    methods=["POST"],
+    tags=["运营管理"],
+    name="运营人员登记故障",
+    openapi_extra={
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+            "required": True,
+            "content": {"application/json": {"schema": schema_for("/api/v1/admin/faults", "POST")}},
+        },
+    },
 )
 app.add_api_route(
     "/api/v1/admin/observability",
@@ -351,7 +362,7 @@ app.add_api_route(
                         "properties": {
                             "events": {
                                 "type": "array",
-                                "maxItems": 100,
+                                "maxItems": 1000,
                                 "items": {"type": "object"},
                             }
                         },
