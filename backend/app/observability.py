@@ -1,4 +1,4 @@
-"""Bounded-cardinality public-test observations. Metrics are never authoritative business data."""
+"""Bounded-cardinality runtime observations. Metrics are never authoritative business data."""
 
 import os
 import time

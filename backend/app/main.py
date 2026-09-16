@@ -328,7 +328,7 @@ app.add_api_route(
     endpoint,
     methods=["GET"],
     tags=["运维"],
-    name="公测运行指标",
+    name="运行指标",
     openapi_extra={"security": [{"BearerAuth": []}]},
 )
 

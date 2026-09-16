@@ -1,4 +1,4 @@
-"""33 business tables from 数据库.md. Additional snapshot columns preserve billing history."""
+"""Business tables and billing snapshots used by the service."""
 
 from sqlalchemy import (
     Table,

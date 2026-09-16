@@ -8,12 +8,11 @@ from test_workflows import call, start, finish, seed_energy, A, B
 
 
 def test_contract_paths_and_time_phone_filters(client, user_headers, admin_headers):
-    source = Path(__file__).parents[2] / "接口文档.md"
-    import re
-
-    expected = set(
-        re.findall(r"\*\*(GET|POST|PUT|DELETE)\*\* `([^`]+)`", source.read_text(encoding="utf-8"))
-    )
+    source = Path(__file__).parents[1] / "api-contract.json"
+    expected = {
+        (item["method"], item["path"])
+        for item in json.loads(source.read_text(encoding="utf-8"))
+    }
     assert len(expected) == 113
     schema = client.get("/openapi.json").json()
     actual = {(method.upper(), path) for path, ops in schema["paths"].items() for method in ops}
