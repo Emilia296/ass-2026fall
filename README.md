@@ -88,7 +88,7 @@ backend/tests/             自动化验收
 
 ## 配置和部署边界
 
-可复制 `backend/.env.example` 为 `backend/.env` 修改连接配置。`DEMO_MODE=true` 时，短信接口返回 `demoCode` 供本机验收，支付渠道全部走模拟支付，设备由模拟器上报。没有真实短信供应商、微信/支付宝支付或充电桩协议对接；这些本来不在 V1.1 接口范围内。选做 AI Agent 也不在本轮接口交付范围内。
+可复制 `backend/.env.example` 为 `backend/.env` 修改连接配置。`DEMO_MODE=true` 时，短信接口返回 `demoCode` 供本机验收，支付渠道全部走模拟支付，设备由模拟器上报。没有真实短信供应商、微信/支付宝支付或充电桩协议对接；这些本来不在 V1.1 接口范围内。已追加轻量业务 Agent，提供真实数据查询和多工具运营报告，详见 [Agent说明](docs/agent.md)。
 
 提供 `compose.yaml` 便于后续容器部署：`docker compose up --build`。容器配置为开发演示用途，本轮验证使用 WSL 原生服务，没有运行 Docker 构建。生产模式 `DEMO_MODE=false` 会拒绝示例 JWT/设备密钥和短信模拟发送；需要实际接入提供商后才可作为生产服务使用。
 

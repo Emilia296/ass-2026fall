@@ -47,6 +47,8 @@ MODULES = {
 
 
 def authorize(u, method, path):
+    if path == "agent/chat" and method == "POST":
+        return  # Each planned read-only tool checks its own view permissions.
     module = MODULES.get(path.split("/")[0])
     require(module is not None, 40400, "接口不存在")
     require(
@@ -184,6 +186,10 @@ def validate_entity(t, data):
 
 def dispatch(db, u, method, path, b, q):
     authorize(u, method, path)
+    if path == "agent/chat" and method == "POST":
+        from .agent import chat
+
+        return chat(db, u, "admin", b)
     parts = path.split("/")
     root = parts[0]
     id = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else None

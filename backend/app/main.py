@@ -291,6 +291,34 @@ for item in contract:
         + item["path"].replace("/", "_").replace("{", "").replace("}", ""),
         openapi_extra=extra,
     )
+for agent_scope in ("app", "admin"):
+    app.add_api_route(
+        f"/api/v1/{agent_scope}/agent/chat",
+        endpoint,
+        methods=["POST"],
+        tags=["业务Agent"],
+        name=f"{agent_scope}只读业务Agent",
+        openapi_extra={
+            "security": [{"BearerAuth": []}],
+            "requestBody": {
+                "required": True,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": ["message"],
+                            "properties": {
+                                "message": {"type": "string", "minLength": 1, "maxLength": 500},
+                                "longitude": {"type": "number", "minimum": -180, "maximum": 180},
+                                "latitude": {"type": "number", "minimum": -90, "maximum": 90},
+                            },
+                        }
+                    }
+                },
+            },
+        },
+    )
 # Original requirement includes operator-entered faults; this is a documented additive endpoint.
 app.add_api_route(
     "/api/v1/admin/faults", endpoint, methods=["POST"], tags=["运营管理"], name="运营人员登记故障"

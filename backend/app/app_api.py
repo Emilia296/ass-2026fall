@@ -5,6 +5,10 @@ from . import charging, benefits, catalog
 
 
 def dispatch(db, u, method, path, b, q):
+    if path == "agent/chat" and method == "POST":
+        from .agent import chat
+
+        return chat(db, u, "app", b)
     uid = u["id"]
     parts = path.split("/")
     root = parts[0]
