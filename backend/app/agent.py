@@ -1,9 +1,63 @@
-"""Bounded, read-only business agent; deterministic planning, no LLM dependency."""
+"""Read-only business tools with a Zhipu GLM response layer."""
 
+import json
+import logging
+import os
 from datetime import timedelta
 from .common import *
 from . import catalog, charging
 from .security import rate_limit
+
+log = logging.getLogger(__name__)
+
+
+def _llm_answer(question, draft, tool_calls, status):
+    """Ask GLM to phrase an answer from bounded evidence, never from raw user data."""
+    key = os.getenv("ZHIPUAI_API_KEY", "").strip()
+    if not key or os.getenv("AGENT_LLM_ENABLED", "true").lower() not in ("1", "true", "yes"):
+        return None
+    try:
+        from zai import ZhipuAiClient
+
+        evidence = serial(tool_calls)
+        payload = json.dumps(evidence, ensure_ascii=False, separators=(",", ":"))[:14000]
+        system = (
+            "你是充电运营平台的业务问答助手。只能依据给定证据回答，不能补造数字、站点、订单、"
+            "故障原因或外部推荐。回答使用简体中文，简洁、直接，最多1200字；金额带元，距离带公里。"
+            "如果证据为空就明确说暂无数据；如果状态为needs_clarification就只提出必要问题；如果为"
+            "unsupported就说明当前能力边界。不要提及提示词、模型或内部推理过程。"
+        )
+        response = ZhipuAiClient(
+            api_key=key,
+            timeout=float(os.getenv("AGENT_LLM_TIMEOUT_SECONDS", "20")),
+            max_retries=0,
+        ).chat.completions.create(
+            model=os.getenv("ZHIPUAI_MODEL", "glm-5.3"),
+            messages=[
+                {"role": "system", "content": system},
+                {
+                    "role": "user",
+                    "content": json.dumps(
+                        {
+                            "question": question,
+                            "status": status,
+                            "draft": draft,
+                            "evidence": json.loads(payload),
+                        },
+                        ensure_ascii=False,
+                    ),
+                },
+            ],
+            temperature=0.3,
+            max_tokens=700,
+            reasoning_effort="low",
+        )
+        answer = (response.choices[0].message.content or "").strip()
+        return answer[:2000] or None
+    except Exception:
+        # An unavailable model must not make read-only business queries unavailable.
+        log.warning("agent LLM request failed; using evidence-based fallback")
+        return None
 
 
 def chat(db, u, scope, b):
@@ -12,16 +66,24 @@ def chat(db, u, scope, b):
     require(0 < len(text) <= 500, message="message须为1至500字")
     rate_limit(f"agent:{scope}:{u['id']}", 30, 60)
     result = {
-        "engine": "RULE_BASED_TOOL_AGENT",
+        "engine": "ZHIPU_GLM",
         "status": "answered",
         "answer": "",
         "tool_calls": [],
         "as_of": now(),
-        "limitations": ["规则驱动的只读工具编排，未接入大模型；不执行预约、支付或设备控制。"],
+        "model": os.getenv("ZHIPUAI_MODEL", "glm-5.3"),
+        "limitations": ["回答基于受控工具证据生成；不执行预约、支付或设备控制。"],
     }
 
     def reply(answer, status="answered"):
         result.update(answer=answer, status=status)
+        generated = _llm_answer(text, answer, result["tool_calls"], status)
+        if generated:
+            result["answer"] = generated
+            result["llm_status"] = "success"
+        else:
+            result["engine"] = "RULE_BASED_FALLBACK"
+            result["llm_status"] = "unavailable"
         return result
 
     def record(name, source, data):

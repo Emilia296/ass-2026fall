@@ -5,6 +5,7 @@ os.environ["DATABASE_URL"] = os.getenv(
 )
 os.environ["REDIS_URL"] = os.getenv("TEST_REDIS_URL", "redis://localhost:6379/15")
 os.environ["DEMO_MODE"] = "true"
+os.environ["AGENT_LLM_ENABLED"] = "false"
 import pytest
 from sqlalchemy import text
 from fastapi.testclient import TestClient

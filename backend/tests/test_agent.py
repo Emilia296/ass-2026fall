@@ -1,4 +1,8 @@
+import sys
+from types import SimpleNamespace
+
 from conftest import login
+from app import agent
 from test_workflows import call, start, finish, seed_energy, A, B
 
 
@@ -9,7 +13,7 @@ def ask(c, h, message, admin=False, **params):
 def test_agent_nearby_and_boundaries(client, user_headers):
     assert ask(client, user_headers, "附近空闲快充")["status"] == "needs_clarification"
     data = ask(client, user_headers, "附近空闲快充", longitude=116.51, latitude=39.92)
-    assert data["engine"] == "RULE_BASED_TOOL_AGENT"
+    assert data["engine"] == "RULE_BASED_FALLBACK"
     stations = data["toolCalls"][0]["data"]["list"]
     assert stations and all(s["idleFastCount"] > 0 and s["distanceKm"] <= 10 for s in stations)
     assert ask(client, user_headers, "推荐餐厅")["status"] == "unsupported"
@@ -60,3 +64,27 @@ def test_agent_rate_limit(client, user_headers):
     for _ in range(30):
         ask(client, user_headers, "帮助")
     call(client, "POST", A + "/agent/chat", user_headers, {"message": "帮助"}, code=42900)
+
+
+def test_agent_uses_zhipu_when_configured(monkeypatch):
+    class FakeCompletions:
+        def create(self, **kwargs):
+            assert kwargs["model"] == "glm-5.3"
+            assert kwargs["messages"][1]["role"] == "user"
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(content="基于证据的模型回答"))]
+            )
+
+    class FakeClient:
+        def __init__(self, **kwargs):
+            assert kwargs["api_key"] == "unit-test-key"
+            self.chat = SimpleNamespace(completions=FakeCompletions())
+
+    monkeypatch.setenv("AGENT_LLM_ENABLED", "true")
+    monkeypatch.setenv("ZHIPUAI_API_KEY", "unit-test-key")
+    monkeypatch.setenv("ZHIPUAI_MODEL", "glm-5.3")
+    monkeypatch.setitem(sys.modules, "zai", SimpleNamespace(ZhipuAiClient=FakeClient))
+    assert (
+        agent._llm_answer("问题", "草稿", [{"tool": "demo", "data": {"n": 1}}], "answered")
+        == "基于证据的模型回答"
+    )

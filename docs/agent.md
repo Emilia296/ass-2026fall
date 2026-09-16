@@ -1,7 +1,9 @@
 # 轻量业务 Agent
 
-`POST /api/v1/app/agent/chat` 和 `POST /api/v1/admin/agent/chat` 是受权限控制的只读业务查询接口。它们使用规则路由选择白名单工具，回答会返回 `engine`、`status`、`answer`、`toolCalls` 和 `asOf`，工具结果带有可核对的业务来源。
+`POST /api/v1/app/agent/chat` 和 `POST /api/v1/admin/agent/chat` 是受权限控制的只读业务查询接口。它们使用规则路由选择白名单工具，再把工具证据交给智谱 GLM（默认 `glm-5.3`）生成回答；响应会返回 `engine`、`model`、`llmStatus`、`status`、`answer`、`toolCalls` 和 `asOf`，工具结果带有可核对的业务来源。
 
-用户侧支持附近空闲快充站、当前充电费用、当前电价、最近订单和当前设备状态辅助排查；运营侧支持营收、站点订单排名、故障排行和组合运营报告。Agent 不执行支付、预约或设备控制，不接收用户 ID 作为查询范围，也不接入餐饮地图。当前实现不依赖大模型服务，`engine` 会明确标记为 `RULE_BASED_TOOL_AGENT`。
+用户侧支持附近空闲快充站、当前充电费用、当前电价、最近订单和当前设备状态辅助排查；运营侧支持营收、站点订单排名、故障排行和组合运营报告。Agent 不执行支付、预约或设备控制，不接收用户 ID 作为查询范围，也不接入餐饮地图。配置密钥后，`engine=ZHIPU_GLM`；未配置或模型暂不可用时，明确标记为 `RULE_BASED_FALLBACK`。
 
 所有查询复用现有业务表和权限，用户数据按令牌隔离；运营报告执行前会检查各工具的查看权限。每个账号每分钟最多 30 次，单条消息最多 500 字。实时费用和空闲状态可能在回答后变化，性能目标仍需公测验证。
+
+在 `backend/.env` 中设置 `ZHIPUAI_API_KEY` 即启用模型生成；密钥不进入响应、日志或 Git。模型超时、额度不足或未配置密钥时，接口保留真实工具结果并使用规则答案，`engine=RULE_BASED_FALLBACK`、`llmStatus=unavailable`，不会伪装成模型已回答。
