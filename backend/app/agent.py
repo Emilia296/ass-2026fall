@@ -3,18 +3,22 @@
 import json
 import logging
 import os
+import threading
 from datetime import timedelta
 from .common import *
 from . import catalog, charging
 from .security import rate_limit
 
 log = logging.getLogger(__name__)
+_llm_gate = threading.BoundedSemaphore(8)
 
 
 def _llm_answer(question, draft, tool_calls, status):
     """Ask GLM to phrase an answer from bounded evidence, never from raw user data."""
     key = os.getenv("ZHIPUAI_API_KEY", "").strip()
     if not key or os.getenv("AGENT_LLM_ENABLED", "true").lower() not in ("1", "true", "yes"):
+        return None
+    if not _llm_gate.acquire(timeout=0.05):
         return None
     try:
         from zai import ZhipuAiClient
@@ -58,6 +62,8 @@ def _llm_answer(question, draft, tool_calls, status):
         # An unavailable model must not make read-only business queries unavailable.
         log.warning("agent LLM request failed; using evidence-based fallback")
         return None
+    finally:
+        _llm_gate.release()
 
 
 def chat(db, u, scope, b):
