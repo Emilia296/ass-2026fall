@@ -5,6 +5,11 @@ from sqlalchemy import select, insert, update, func, String, Boolean, BigInteger
 from . import models as m
 from .db import now
 
+DATE_FILTER_COLUMNS = {
+    m.reservation.name: "reservation_time",
+    m.fault.name: "fault_time",
+}
+
 
 class BizError(Exception):
     def __init__(self, code=40000, message="请求参数错误", persist=False):
@@ -213,7 +218,14 @@ def page(db, t, q, *cond):
     for k in ("startDate", "startTime", "endDate", "endTime"):
         if q.get(k):
             value = dt(q[k])
-            col = t.c.start_time if "start_time" in t.c else t.c.created_at
+            date_name = DATE_FILTER_COLUMNS.get(t.name)
+            col = (
+                t.c[date_name]
+                if date_name and date_name in t.c
+                else t.c.start_time
+                if "start_time" in t.c
+                else t.c.created_at
+            )
             if k == "endDate":
                 from datetime import timedelta
 

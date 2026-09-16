@@ -71,11 +71,11 @@ npm run dev
 }
 ```
 
-响应字段为 camelCase。完整请求体、查询参数和业务码以 Swagger/OpenAPI 为准；支付等非幂等操作可使用 `Idempotency-Key`。
+响应字段为 camelCase。完整请求体、查询参数和业务码以 Swagger/OpenAPI 为准；支付等非幂等操作可使用 `Idempotency-Key`。原始 113 条接口之外的 Agent、设备遥测、运行观测和健康检查扩展见 [API扩展说明](docs/api-extensions.md)。
 
 ## 配置和运行边界
 
-复制 `backend/.env.example` 为 `backend/.env` 调整数据库、Redis、JWT、设备密钥和连接池配置。`DEMO_MODE=true` 时短信、支付和设备上报使用本地演示实现；接入真实供应商后再切换生产配置。
+复制 `backend/.env.example` 为 `backend/.env` 调整数据库、Redis、JWT、设备密钥和连接池配置。`DEMO_MODE=true` 时短信、支付和设备上报使用本地演示实现；短信接口仍不会回显验证码；接入真实供应商后再切换生产配置。
 
 后端默认启动 API、Worker 和设备模拟器，日志位于 `.runtime/api.log`、`.runtime/worker.log` 和 `.runtime/simulator.log`。也提供 `compose.yaml` 作为容器部署入口。
 

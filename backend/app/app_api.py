@@ -134,6 +134,7 @@ def dispatch(db, u, method, path, b, q):
     if path == "favorites/stations":
         return catalog.stations(db, q, uid, True)
     if path == "piles/scan":
+        require(q.get("qrCode"), message="缺少qrCode")
         p = one(db, m.pile, m.pile.c.qr_code == q.get("qrCode"))
         st = get(db, m.station, p["station_id"])
         return {

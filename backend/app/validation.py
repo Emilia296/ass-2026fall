@@ -93,6 +93,51 @@ FIELDS = {
     "availability-watch": "pileType",
 }
 
+# Query metadata is kept beside body metadata so the generated OpenAPI remains
+# useful to clients instead of describing every list as an untyped black box.
+COMMON_LIST_QUERY = {
+    "page": "integer",
+    "pageSize": "integer",
+    "keyword": "string",
+    "status": "string",
+    "startDate": "string",
+    "endDate": "string",
+    "startTime": "string",
+    "endTime": "string",
+}
+QUERY_FIELDS = {
+    "app/stations": {
+        **COMMON_LIST_QUERY,
+        "city": "string",
+        "pileType": "string",
+        "idleOnly": "boolean",
+        "maxPrice": "number",
+        "maxDistance": "number",
+        "longitude": "number",
+        "latitude": "number",
+        "sortBy": "string",
+        "sortOrder": "string",
+    },
+    "app/stations/{id}/piles": {"pileType": "string", "status": "string"},
+    "app/piles/scan": {"qrCode": "string"},
+    "app/favorites/stations": {**COMMON_LIST_QUERY},
+    "app/reservations": {**COMMON_LIST_QUERY},
+    "app/orders": {**COMMON_LIST_QUERY, "paymentStatus": "string", "orderStatus": "string"},
+    "app/messages": {**COMMON_LIST_QUERY, "isRead": "boolean"},
+    "app/coupons": {**COMMON_LIST_QUERY, "couponStatus": "string"},
+    "admin/stations": {**COMMON_LIST_QUERY, "city": "string"},
+    "admin/piles": {**COMMON_LIST_QUERY, "stationId": "integer", "pileType": "string"},
+    "admin/orders": {**COMMON_LIST_QUERY, "stationId": "integer", "paymentStatus": "string"},
+    "admin/reservations": {**COMMON_LIST_QUERY, "stationId": "integer"},
+    "admin/faults": {**COMMON_LIST_QUERY, "stationId": "integer", "pileId": "integer"},
+    "admin/operation-logs": {**COMMON_LIST_QUERY, "adminId": "integer", "module": "string"},
+    "admin/login-logs": {**COMMON_LIST_QUERY, "accountType": "string", "result": "string"},
+    "admin/users": {**COMMON_LIST_QUERY, "minCreditScore": "integer"},
+    "admin/system-configs": {"keys": "string"},
+    "admin/occupancy-fee-rules": {"stationId": "integer"},
+    "admin/dashboard/summary": {"startDate": "string", "endDate": "string"},
+}
+
 
 def normalize(path):
     p = re.sub(r"\{[^}]+\}|(?<=/)\d+(?=/|$)", "{id}", path.removeprefix("/api/v1/"))
@@ -103,6 +148,30 @@ def normalize(path):
 
 def fields_for(path):
     p = normalize(path)
+    # Action endpoints either have a small dedicated payload or no payload at
+    # all. Do not inherit the create-resource schema for these operations.
+    if (
+        p.endswith("/favorite")
+        or p.endswith("/availability-watch/continue")
+        or p.endswith("/availability-watch/cancel")
+    ):
+        return []
+    if p.endswith("/orders/{id}/quote"):
+        return ["userCouponId"]
+    if p.endswith("/orders/{id}/pay"):
+        return ["payMethod"]
+    if p.endswith("/charging/sessions/{id}/stop"):
+        return ["reason"]
+    if p.endswith("/faults/{id}/process"):
+        return ["handleNote"]
+    if p.endswith("/faults/{id}/resolve"):
+        return ["handleNote", "pileStatus"]
+    if p.endswith("/after-sales/{id}/handle"):
+        return ["action", "handleResult", "refundType", "refundAmount"]
+    if p.endswith("/unlock"):
+        return ["reason"]
+    if p.endswith("/cancel") or p.endswith("/arrive") or p.endswith("/leave"):
+        return []
     parts = p.split("/")[1:]
     for key in ("auth/login", "auth/password", "auth/sms-code"):
         if "/".join(parts) == key:
@@ -142,6 +211,26 @@ def schema_for(path, method):
         if k not in required:
             props[k]["nullable"] = True
     return {"type": "object", "properties": props, "required": required}
+
+
+def query_for(path):
+    """Return OpenAPI query parameter definitions for a concrete route."""
+    p = normalize(path)
+    fields = QUERY_FIELDS.get(p)
+    if fields is None:
+        # Generic list resources all share the bounded pagination/date/keyword
+        # contract implemented by common.page.
+        root = p.split("/")[1] if len(p.split("/")) > 1 else ""
+        fields = COMMON_LIST_QUERY if p.endswith(root) and "{" not in p else {}
+    result = []
+    for name, kind in fields.items():
+        schema = {"type": kind}
+        if name == "page":
+            schema["minimum"] = 1
+        if name == "pageSize":
+            schema.update(minimum=1, maximum=100)
+        result.append({"name": name, "in": "query", "required": name == "qrCode", "schema": schema})
+    return result
 
 
 def validate(path, method, b):

@@ -75,7 +75,9 @@ def auth_action(db, scope, path, b, request):
         require(DEMO, 50300, "短信服务未配置")
         code = str(secrets.randbelow(900000) + 100000)
         cache.setex("sms:" + phone, 300, hashlib.sha256(code.encode()).hexdigest())
-        return {"sent": True, "expires_in": 300, "demo_code": code}
+        # The generated code is stored only as a hash. Even in DEMO_MODE the
+        # API never echoes an authentication secret back to the caller.
+        return {"sent": True, "expires_in": 300}
     if path == "auth/login":
         account = b.get("username" if is_admin else "phone", "")
         method = "PASSWORD" if is_admin else b.get("loginMethod")

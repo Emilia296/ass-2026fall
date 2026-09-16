@@ -16,7 +16,7 @@ from .db import Session, now
 from .common import *
 from .security import authenticate, auth_action, cache, rate_limit
 from . import app_api, admin_api
-from .validation import validate, schema_for
+from .validation import validate, schema_for, query_for
 from .hot_cache import remember
 from . import observability
 import time
@@ -273,10 +273,14 @@ for item in contract:
         }
         for p in re.findall(r"\{([^}]+)\}", item["path"])
     ]
+    if item["method"] == "GET":
+        parameters.extend(query_for(item["path"]))
     extra = {"parameters": parameters}
-    if item["method"] in ("POST", "PUT"):
+    body_schema = schema_for(item["path"], item["method"])
+    if item["method"] in ("POST", "PUT") and (body_schema["properties"] or body_schema["required"]):
         extra["requestBody"] = {
-            "content": {"application/json": {"schema": schema_for(item["path"], item["method"])}}
+            "required": True,
+            "content": {"application/json": {"schema": body_schema}},
         }
     if "/auth/login" not in item["path"] and "/auth/sms-code" not in item["path"]:
         extra["security"] = [{"BearerAuth": []}]
@@ -333,7 +337,30 @@ app.add_api_route(
 )
 
 
-@app.post("/api/v1/device/telemetry", tags=["设备接入"])
+@app.post(
+    "/api/v1/device/telemetry",
+    tags=["设备接入"],
+    openapi_extra={
+        "requestBody": {
+            "required": True,
+            "content": {
+                "application/json": {
+                    "schema": {
+                        "type": "object",
+                        "required": ["events"],
+                        "properties": {
+                            "events": {
+                                "type": "array",
+                                "maxItems": 100,
+                                "items": {"type": "object"},
+                            }
+                        },
+                    }
+                }
+            },
+        }
+    },
+)
 async def device_telemetry(request: Request):
     from .telemetry import ingest
 

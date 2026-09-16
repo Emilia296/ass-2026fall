@@ -314,9 +314,13 @@ def test_price_validation_and_snapshot(client, user_headers, admin_headers):
         assert get(db, m.session, s["id"])["price_snapshot"] == before
 
 
-def test_sms_once_and_default_vehicle_constraint(client, user_headers):
+def test_sms_once_and_default_vehicle_constraint(client, user_headers, monkeypatch):
+    # Keep the test deterministic without making an authentication secret part
+    # of the API response.
+    monkeypatch.setattr("app.security.secrets.randbelow", lambda _: 23456)
     result = client.post(A + "/auth/sms-code", json={"phone": "13800138009"}).json()["data"]
-    body = {"phone": "13800138009", "loginMethod": "SMS_CODE", "smsCode": result["demoCode"]}
+    assert result == {"sent": True, "expiresIn": 300}
+    body = {"phone": "13800138009", "loginMethod": "SMS_CODE", "smsCode": "123456"}
     assert client.post(A + "/auth/login", json=body).json()["code"] == 0
     assert client.post(A + "/auth/login", json=body).json()["code"] == 40004
     v = call(
