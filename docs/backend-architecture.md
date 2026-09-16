@@ -4,7 +4,8 @@
 
 ```mermaid
 flowchart LR
-  Client[H5 / 运营端] --> API[无状态 FastAPI 多进程]
+  Client[H5 / 运营端] --> Gateway[Nginx 最少连接负载均衡 / 限流]
+  Gateway --> API[无状态 FastAPI 多实例多进程]
   API --> PG[(PostgreSQL 业务事务)]
   API --> Cache[(Redis 验证码 / 限流 / 站点缓存)]
   Device[设备 / 模拟器] --> Ingress[签名校验 / 批量接入]
@@ -64,8 +65,12 @@ Compose 中 Redis 开启 AOF everysec，因此极端主机崩溃可能损失最�
 ## 查询与扩容边界
 
 - 站点列表由 SQL 聚合桩状态，按实际经纬度计算球面距离；支持城市、设备类型、状态、距离/价格排序，以及前端参考要求的关键字、最大距离、价格、空闲筛选。
-- 用户站点列表按查询条件缓存2秒，返回数据最多有2秒延迟；扫码、开始充电、预约和支付始终访问数据库进行状态核验。Redis 故障时返回可重试的503，避免无界回源。
+- 用户站点列表按查询条件缓存2秒；失效后使用跨进程互斥锁，只允许锁持有者回源。同键其他请求最多等150ms，未得到结果则返回可重试的503，不绕过锁打向数据库。锁35秒自动过期，释放与发布结果时使用随机持有者标识做Lua校验，防止旧持有者删除新锁或覆盖新缓存。扫码、开始充电、预约和支付始终访问数据库进行状态核验。
 - 常用关联、状态、用户流水和时间查询有组合索引；列表分页限制100条，统计最多366天，热点更新不采用应用进程内锁。
-- 本轮实现可多进程/多实例运行，但单 PostgreSQL、单 Redis、统计即时聚合、库存计数查询和单事件事务消费仍有吞吐上限。全国规模部署需要根据真实压测结果进一步规划数据库分片/读副本、专用缓存与队列集群、设备批写、统计预聚合和运维容量，不能凭代码结构认定达到目标QPS。
+- `compose.public-test.yaml` 提供双API实例、两个消费进程各负责8个分区的拓扑。Nginx使用最少连接分配、上游连接复用、失败节点暂时摘除，以及每IP登录/业务限流、连接数和请求体限制。已发送的非幂等POST不会自动重放；数据库约束仍是最终一致性防线。
+- `GET /api/v1/admin/observability` 返回当天各路由请求数、平均耗时、P95耗时桶上界、HTTP 5xx率、上一完整分钟平均QPS、16个设备分区的积压/pending、死信数和Worker心跳。路由使用模板而非实际用户ID，避免指标维度无限增长；HTTP日指标保留8天，分钟数据保留1小时。指标写入为尽力而为、短超时，故障不改变业务成功结果；P95是桶估计而非精确分位数。
+- 验证方式改为公测，不安排独立压力测试。当前交付证明上述机制已实现，不证明原始目标QPS已实测达成。单PostgreSQL、单Redis、实时统计和逐事件事务的实际吞吐边界，将根据公测积压、耗时和错误率决定是否进一步引入读副本、数据库分片、批写及统计预聚合。
 
 实现参考：[SQLAlchemy PostgreSQL 行锁](https://docs.sqlalchemy.org/en/20/core/selectable.html)、[Redis Streams](https://redis.io/docs/latest/develop/data-types/streams/)、[XAUTOCLAIM](https://redis.io/docs/latest/commands/xautoclaim/)。
+
+本轮补强参考：[Nginx负载均衡](https://nginx.org/en/docs/http/load_balancing.html)、[Nginx请求限流](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html)、[Redis锁持有者校验](https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/)。

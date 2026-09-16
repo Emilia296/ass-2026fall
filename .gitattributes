@@ -3,5 +3,7 @@
 /docs/** text eol=lf
 /README.md text eol=lf
 /compose.yaml text eol=lf
+/compose.public-test.yaml text eol=lf
+/deploy/** text eol=lf
 /.gitignore text eol=lf
 /.gitattributes text eol=lf

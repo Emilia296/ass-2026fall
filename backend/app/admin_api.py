@@ -22,6 +22,7 @@ TABLES = {
     "login-logs": m.login_log,
 }
 MODULES = {
+    "observability": "dashboard",
     "stations": "station",
     "piles": "pile",
     "charging": "pile",
@@ -186,6 +187,10 @@ def dispatch(db, u, method, path, b, q):
     parts = path.split("/")
     root = parts[0]
     id = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else None
+    if path == "observability":
+        from .observability import snapshot
+
+        return snapshot()
     if path == "dashboard/summary":
         return dashboard(db, q)
     if root == "charging":

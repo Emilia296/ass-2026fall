@@ -17,6 +17,9 @@ from .common import *
 from .security import authenticate, auth_action, cache, rate_limit
 from . import app_api, admin_api
 from .validation import validate, schema_for
+from .hot_cache import remember
+from . import observability
+import time
 
 app = FastAPI(
     title="Electra 智能充电运营平台",
@@ -31,6 +34,21 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type", "Idempotency-Key"],
 )
+
+
+@app.middleware("http")
+async def observe_http(request, call_next):
+    started = time.perf_counter()
+    result = await call_next(request)
+    route = getattr(request.scope.get("route"), "path", "/unmatched")
+    await run_in_threadpool(
+        observability.record,
+        request.method,
+        route,
+        result.status_code,
+        time.perf_counter() - started,
+    )
+    return result
 
 
 def response(data=None, code=0, message="success", status=200):
@@ -141,12 +159,11 @@ def process(request, body):
                         "catalog:"
                         + hashlib.sha256(json.dumps(q, sort_keys=True).encode()).hexdigest()
                     )
-                    cached = cache.get(cache_key)
-                    if cached is not None:
-                        return response(json.loads(cached))
-                data = app_api.dispatch(db, u, method, path, body, q)
-                if cache_key:
-                    cache.setex(cache_key, 2, json.dumps(serial(data)))
+                    data = remember(
+                        cache_key, lambda: app_api.dispatch(db, u, method, path, body, q)
+                    )
+                else:
+                    data = app_api.dispatch(db, u, method, path, body, q)
         if isinstance(data, dict) and method != "GET":
             aliases = {
                 "stations": "station_id",
@@ -278,6 +295,14 @@ for item in contract:
 app.add_api_route(
     "/api/v1/admin/faults", endpoint, methods=["POST"], tags=["运营管理"], name="运营人员登记故障"
 )
+app.add_api_route(
+    "/api/v1/admin/observability",
+    endpoint,
+    methods=["GET"],
+    tags=["运维"],
+    name="公测运行指标",
+    openapi_extra={"security": [{"BearerAuth": []}]},
+)
 
 
 @app.post("/api/v1/device/telemetry", tags=["设备接入"])
@@ -288,6 +313,7 @@ async def device_telemetry(request: Request):
         raw = await request.body()
         require(len(raw) <= 1048576)
         data = json.loads(raw)
+        require(isinstance(data, dict), message="设备请求体必须为对象")
         result = await run_in_threadpool(ingest, data.get("events"))
         return response(result)
     except BizError as exc:

@@ -1,0 +1,30 @@
+# Use with: docker compose -f compose.yaml -f compose.public-test.yaml up --build
+# This is a topology configuration, not a claim of measured capacity.
+services:
+  api:
+    ports: !reset []
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "2", "--limit-concurrency", "500", "--forwarded-allow-ips", "*"]
+  api-secondary:
+    extends: {file: compose.yaml, service: api}
+    ports: !reset []
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "2", "--limit-concurrency", "500", "--forwarded-allow-ips", "*"]
+  worker:
+    environment:
+      WORKER_PARTITIONS: "0,1,2,3,4,5,6,7"
+      DB_POOL_SIZE: "2"
+      DB_MAX_OVERFLOW: "1"
+  worker-secondary:
+    extends: {file: compose.yaml, service: worker}
+    environment:
+      WORKER_PARTITIONS: "8,9,10,11,12,13,14,15"
+      DB_POOL_SIZE: "2"
+      DB_MAX_OVERFLOW: "1"
+  simulator:
+    environment:
+      DB_POOL_SIZE: "2"
+      DB_MAX_OVERFLOW: "1"
+  gateway:
+    image: nginx:1.28
+    ports: ["127.0.0.1:8080:8080"]
+    volumes: ["./deploy/nginx.conf:/etc/nginx/nginx.conf:ro"]
+    depends_on: [api, api-secondary]
